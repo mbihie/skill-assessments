@@ -1,0 +1,184 @@
+---
+title: "RforDataScience-Mahad-Bihie"
+output: html_document
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+
+Libraries
+```{r libraries} 
+library(tibble)
+library(tidyverse)
+library(tidyr)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(kableExtra)
+```
+
+## Question 1a
+Read in the gapminder_clean.csv data as a tibble using read_csv.
+
+```{r add data}
+gmclean <- read_csv("gapminder_clean.csv")
+
+```
+
+## Question 2a
+Filter the data to include only rows where Year is 1962 and then make a scatter plot comparing 'CO2 emissions (metric tons per capita)' and gdpPercap for the filtered data.
+
+```{r, fig.width=8,fig.height=6}
+gmclean1962 <- gmclean %>%
+  filter(Year == 1962, continent %in% c("Africa", "Americas", "Asia", "Europe", "Oceania"))
+
+co2gdp <- ggplot(gmclean1962, aes(x = `CO2 emissions (metric tons per capita)`, y = gdpPercap, color = continent)) +
+  geom_point() +
+  scale_x_log10() +
+  scale_y_log10() + 
+  ggtitle("gdpPercap vs CO2 Emissions")
+
+ggplotly(co2gdp)
+```
+
+## Question 3a
+On the filtered data, calculate the correlation of 'CO2 emissions (metric tons per capita)' and gdpPercap. What is the correlation and associated p value?
+
+The code show below provides the correlation and associate p value. Due to the linear shape of the graph above, the pearson correlation was used to calculate the linear relationship between these two continuous variables in both question 3a and 4a.
+
+```{r, results='hide'}
+cor.result <- cor.test(formula = ~ gmclean1962$`CO2 emissions (metric tons per capita)` + gmclean1962$gdpPercap, data = gmclean1962)
+```
+
+The correlation between the two variables is **`r  cor.result$estimate`**, which implies a positive linear correlation. With a significance level of **α = 0.05** and an associated p value **`r cor.result$p.value`**, we have sufficient evidence to claim that the correlation is statistically significant.
+
+## Question 4a
+On the unfiltered data, answer "In what year is the correlation between 'CO2 emissions (metric tons per capita)' and gdpPercap the strongest?" Filter the dataset to that year for the next step.
+#should only get 10 values for each year
+```{r}
+gmstrong <- gmclean %>%
+  group_by(Year) %>%
+  summarise(crltn = max(cor(`CO2 emissions (metric tons per capita)`, gdpPercap, use = "complete.obs"))) %>%
+  arrange(desc(crltn))
+
+
+kbl(head(gmstrong)) %>%
+  kable_styling()
+```
+
+As shown above, the year with the strongest correlation between 'CO2 emissions (metric tons per capita)' and gdpPercap is **`r gmstrong$Year[1]`**.
+
+## Question 5a
+Using plotly, create an interactive scatter plot comparing 'CO2 emissions (metric tons per capita)' and gdpPercap, where the point size is determined by pop (population) and the color is determined by the continent. You can easily convert any ggplot plot to a plotly plot using the ggplotly() command.
+
+```{r, fig.width=10,fig.height=8}
+# the data filtered to 1967
+gmclean1967 <- gmclean %>%
+  filter(Year == 1967, continent %in% c("Africa", "Americas", "Asia", "Europe", "Oceania"))
+
+co2gdp67 <- ggplot(gmclean1967, aes(x = `CO2 emissions (metric tons per capita)`, y = gdpPercap, color = continent)) +
+  geom_point(aes(size = pop, alpha = 0.5)) +
+  scale_size(guide = "none") +
+  scale_alpha(guide = "none") +
+  scale_x_log10() +
+  scale_y_log10() + 
+  ggtitle("gdpPercap vs CO2 Emissions")
+
+ggplotly(co2gdp67)
+```
+
+## Question 1b
+What is the relationship between continent and 'Energy use (kg of oil equivalent per capita)'? (stats test needed)
+
+The relationship each continent has with its own 'Energy use (kg of oil equivalent per capita)' differs significantly from how much energy is used in other continents. As there are three or more independent categorical variables in the continent column of the dataset, I used the Kruskal-Wallis test. The level of significance is set to **α = 0.05**.
+```{r}
+gmcleane <- gmclean %>%
+   rename(energy = "Energy use (kg of oil equivalent per capita)")
+ 
+ ktest <- kruskal.test(
+   energy ~ continent,
+   data = gmcleane
+ )
+```
+
+The p value found above is **`r ktest$p.value`**, which implies that there is a significant difference between energy use of each continent.
+
+
+```{r}
+stest <- shapiro.test(gmclean$`Energy use (kg of oil equivalent per capita)`)
+```
+
+The Kruskal-Wallis test was used as it is a non-parametric test and the data used is not distributed normally. This test can calculate significance for data with more than two groups as well. The Shapiro-Wilk normality test was used to see if the data is significantly different from a normal distribution. As the p-value (**`r stest$p.value`**)  from the code above is less than (**α=0.05**), we can assume non-normality.
+
+## Question 2b
+Is there a significant difference between Europe and Asia with respect to 'Imports of goods and services (% of GDP)' in the years after 1990? (stats test needed)
+
+```{r}
+gmclean1990 <- gmclean %>%
+  filter(Year > 1990)
+
+europe90 <- gmclean1990 %>%
+  filter(continent == "Europe")
+eurogoods <- europe90$`Imports of goods and services (% of GDP)`
+
+asia90 <- gmclean1990 %>%
+  filter(continent == "Asia")
+asiagoods <- asia90$`Imports of goods and services (% of GDP)`
+
+wtest <- wilcox.test(eurogoods, asiagoods, alternative = "two.sided")
+```
+
+To test if there is a significant difference between two variables of interest, I ran a wilcox test. With the p-value(**`r wtest$p.value`**) shown above, there isn't a significant difference between the imports of goods and services between the two continents as the significance level (α) is set to **0.05**.
+
+```{r, figures-side, fig.show="hold", out.width="50%"}
+ggplot(europe90, aes(x = europe90$`Imports of goods and services (% of GDP)`)) +
+  geom_histogram(binwidth = 5) +
+  labs(title = "Europe", x = "`Imports of goods and services (% of GDP)`", y = "count")
+
+ggplot(asia90, aes(x = asia90$`Imports of goods and services (% of GDP)`)) +
+  geom_histogram(binwidth = 5) +
+  labs(title = "Asia", x = "`Imports of goods and services (% of GDP)`", y = "count")
+```
+
+The wilcox test was chosen as the data is not normally distributed. The non-normal distribution can be seen  here for the 'Imports of goods and services (% of GDP)' across both Asia and Europe.
+
+## Question 3b
+What is the country (or countries) that has the highest 'Population density (people per sq. km of land area)' across all years?
+```{r}
+rankpd <- gmclean %>%
+  rename(country = `Country Name`) %>%
+  rename(popd = `Population density (people per sq. km of land area)`) %>%
+  select(country, Year, popd) %>%
+  na.omit() %>%
+  group_by(Year) %>%
+  mutate(r = rank(popd, ties.method = "average")) %>%
+  arrange(desc(r)) %>% 
+  ungroup() %>%
+  filter(r == max(r))
+
+kbl(head(rankpd)) %>%
+  kable_styling()
+
+```
+The countries with the highest population density across all years in the dataset are shown above. **`r rankpd$country[1]`** had the highest average ranking in population density, with **`r rankpd$popd[1]`** people per sq. km of land area.
+
+## Question 4b
+What country (or countries) has shown the greatest increase in 'Life expectancy at birth, total (years)' between 1962 and 2007?
+
+The countries with the greatest increase in life expectancy at birth are shown below. 
+```{r}
+explife <- gmclean %>%
+  group_by(`Country Name`) %>%
+  filter(Year %in% c(1962,2007)) %>%
+  select(`Country Name`, Year, `Life expectancy at birth, total (years)`) %>%
+  spread(key = Year, value = `Life expectancy at birth, total (years)`) %>%
+  mutate(inc = `2007`-`1962`) %>%
+  select(-`1962`, -`2007`) %>% 
+  arrange(desc(inc))
+
+kbl(head(explife)) %>%
+  kable_styling()
+```
