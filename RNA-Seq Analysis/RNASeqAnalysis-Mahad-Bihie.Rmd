@@ -196,7 +196,6 @@ pheatmap(DE,
 
 ## 6. Enrichment Analysis of the top over- and under-expressed KEGG pathways. 
 ```{r, results = FALSE, message = FALSE, warning = FALSE}
-#, echo=FALSE, message = FALSE, warning = FALSE
 #reorder these results by p-value and call summary() on the results object
 res = res[order(res$pvalue),]
 summary(res)
@@ -235,7 +234,7 @@ keggres = gage(foldchanges, gsets=kegg.sets.hs, same.dir=TRUE)
 ```
 ### A datatable of Top Over-Expressed & Under-Expressed KEGG Pathways.
 ```{r}
-#join the over expressed and under expressed pathways
+#join the over-expressed and under-expressed pathways
 keggtable <- c(rownames(keggres$greater),rev(rownames(keggres$less)))
 
 #edit the dataframe
