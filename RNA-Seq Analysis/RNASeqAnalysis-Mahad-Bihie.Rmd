@@ -232,7 +232,7 @@ names(foldchanges) = res$entrez
 #Get the results for the pathway analysis
 keggres = gage(foldchanges, gsets=kegg.sets.hs, same.dir=TRUE)
 ```
-### A datatable of Top Over-Expressed & Under-Expressed KEGG Pathways.
+### A datatable of the Top Over-Expressed & Under-Expressed KEGG Pathways.
 ```{r}
 #join the over-expressed and under-expressed pathways
 keggtable <- c(rownames(keggres$greater),rev(rownames(keggres$less)))
