@@ -88,7 +88,7 @@ rld <- rlog(dds)
 #plot the PCA
 plotadj <- plotPCA(rld)
 
-#edit the plot
+#edit the plot height and width
 plotadj + coord_fixed(ratio = 1,
                       xlim=c(-150, 150),
                       ylim=c(-100, 100))
