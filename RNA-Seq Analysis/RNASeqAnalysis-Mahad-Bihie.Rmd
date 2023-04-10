@@ -8,8 +8,10 @@ output:
     code_folding: hide
 ---
 
-## Required Libraries
+
 ```{r libraries, message=FALSE}
+#Required Libraries
+
 #BiocManager::install("DESeq2")
 library(DESeq2)
 #BiocManager::install("EnsDb.Hsapiens.v86")
@@ -45,7 +47,7 @@ library(kableExtra)
 ```
 
 
-## Construct the DESEQDataSet Object
+## Construct the DESeq2 DataSet Object
 
 I have created the DES object using the Ewing sarcoma RNA-seq data set provided. I have also made small changes to the DES object such as reducing the data to normalized values, removing low gene counts and removing the version number from the geneID.
 ```{r, message = FALSE, warning = FALSE}
@@ -164,9 +166,9 @@ datatable(DEgenes,
 ```
 
 ## 4. Volcano Plot of all Differentially Expressed Genes
-olcano plots display the statistical significance of the difference relative to the magnitude of difference for every single gene in the comparison
 
-This volcano plot presents a wide dispersion between the control and experimental group, which implies that there is a strong difference in gene expression. For example, COL11A1 is shown to have a small p-value and is therefore considered statistically differentially expressed. The are also many genes far from 0 which shows that are large differences in mean expression levels. Question 3 also supports the significance of COLL1A1.
+
+Volcano plots display the statistical significance of the difference relative to the magnitude of difference for every single gene in the comparison. This volcano plot presents a wide dispersion between the control and experimental group, which implies that there is a strong difference in gene expression. For example, COL11A1 is shown to have a small p-value and is therefore considered statistically differentially expressed. The are also many genes far from 0 which shows that are large differences in mean expression levels. Question 3 also supports the significance of COLL1A1.
 ```{r, message = FALSE, warning = FALSE, fig.height = 10, fig.width = 10}
 #create the volcano plot
 EnhancedVolcano(resdfsym, lab = resdfsym$SYMBOL, pCutoff = 0.05,
@@ -178,6 +180,7 @@ EnhancedVolcano(resdfsym, lab = resdfsym$SYMBOL, pCutoff = 0.05,
 ```
 
 ## 5. Heatmap of Top 10 Over Expressed & Under expressed DEGs
+The heatmap below shows a clear distinction between the untreated and treated samples in terms of gene expression. Under the treated columns, you can see which genes are over-expressed and under-expressed as they are coloured according to the gradient on the right. The untreated samples are down regulated for the top 10 over-expressed genes shown, with mixed results for the bottom 10 under expressed genes. 
 ```{r, message = FALSE}
 #filter df to significant DEGs that are both over expressed and underexpressed
 orderedSig <-resdfsym %>%
@@ -219,40 +222,34 @@ pheatmap(DE,
 ```
 
 ## 6. Enrichment Analysis of the top over- and under-expressed KEGG pathways. 
+I used the gage() function to generate the top over-expressed and under-expressed KEGG pathways, using the results of the DESeq2 object. I then created a data table of the pathways and test statistics. I also included the enrichment scores from the gseKEGG() function. Lastly, I added the the top over-expressed and under-expressed KEGG pathway below.  
 ```{r, results = FALSE, message = FALSE, warning = FALSE}
 #reorder these results by p-value and call summary() on the results object
 res = res[order(res$pvalue),]
 summary(res)
-
 res$symbol = mapIds(org.Hs.eg.db,
                      keys=row.names(res),
                      column="SYMBOL",
                      keytype="ENSEMBL",
                      multiVals="first")
-
 res$entrez = mapIds(org.Hs.eg.db,
                      keys=row.names(res),
                      column="ENTREZID",
                      keytype="ENSEMBL",
                      multiVals="first")
-
 res$name =   mapIds(org.Hs.eg.db,
                      keys=row.names(res),
                      column="GENENAME",
                      keytype="ENSEMBL",
                      multiVals="first")
-
 #setup the KEGG data-sets we need.
 data(kegg.sets.hs)
 data(sigmet.idx.hs)
-
 #remove unnecessary pathway defintions
 kegg.sets.hs = kegg.sets.hs[sigmet.idx.hs]
-
 #creating vector of FCs with Entrez IDs as the names for the gage() function
 foldchanges = res$log2FoldChange
 names(foldchanges) = res$entrez
-
 #Get the results for the pathway analysis
 keggres = gage(foldchanges, gsets=kegg.sets.hs, same.dir=TRUE)
 ```
@@ -263,31 +260,26 @@ keggtable <- c(rownames(keggres$greater),rev(rownames(keggres$less)))
 
 #edit the dataframe
 keggtable <- as.data.frame(keggtable) 
+
 keggtable <- keggtable %>%
   separate(keggtable,
            sep = 9,
            into=c("pathid","pathway")) %>% 
-  select(pathway,pathid) 
+  mutate(pathid = substring(pathid, 4)) %>%
+  select(pathway,pathid) %>% 
+  distinct()
 
-#erm <- distinct(keggtable$pathid)
-  
-#format p value for downregulated pathways
-ls <- as.data.frame(keggres$less) %>%
-  rownames_to_column() %>%
-  rename(pathway = rowname) %>%
-  mutate(pathway = substring(pathway, 10)) %>% map_df(rev)
-
-#format p value for upregulated pathways
+#format p value for upregulated and downregulated pathways
 grtr <- as.data.frame(keggres$greater) %>%
   rownames_to_column() %>%
   rename(pathway = rowname) %>%
-  mutate(pathway = substring(pathway, 10))
+  mutate(pathway = substring(pathway, 10)) %>% na.omit() %>% distinct()
 
 #join dataframes
-grtrls <- rbind(grtr,ls)
-KT <- keggtable %>%
-  full_join(grtrls, by="pathway") %>%
-  select(pathway, pathid, p.val)
+KT <- grtr %>%
+  left_join(keggtable, by="pathway") %>%
+  select(pathway, pathid, p.val, stat.mean) %>%
+  distinct()
 
 #present the results in a data table
 datatable(KT, 
@@ -301,15 +293,16 @@ datatable(KT,
          )
 
 ```
-#test zone for kegg enrichment
-```{r, message = FALSE, warning = FALSE, fig.height = 10, fig.width = 10}
-#link: https://learn.gencore.bio.nyu.edu/rna-seq-analysis/gene-set-enrichment-analysis/
+### The Enrichment Scores from gseKEGG() Function.
+```{r, message = FALSE, warning = FALSE}
+#create a df of the results from the modified resNorm
+resdf2 <- as.data.frame(resNorm)
 
 # we want the log2 fold change 
-original_gene_list <- resdf$log2FoldChange
+original_gene_list <- resdf2$log2FoldChange
 
 # name the vector
-names(original_gene_list) <- rownames(resdf)
+names(original_gene_list) <- rownames(resdf2)
 
 # omit any NA values 
 original_gene_list <- na.omit(original_gene_list)
@@ -327,7 +320,7 @@ ids <- bitr(geneID = names(original_gene_list),
 # remove duplicate IDS (here I use "ENSEMBL", but it should be whatever was selected as keyType)
 dedup_ids = ids[!duplicated(ids[c("ENSEMBL")]),]
 
-df2 = resdf[rownames(resdf) %in% dedup_ids$ENSEMBL,]
+df2 = resdf2[rownames(resdf2) %in% dedup_ids$ENSEMBL,]
 
 df2$Y = dedup_ids$ENTREZID
 
@@ -353,10 +346,38 @@ kk2 <- gseKEGG(geneList     = kegg_gene_list,
                pAdjustMethod = "none",
                keyType       = "ncbi-geneid")
 
-out <- kk2@result
 
-datatable(out)
+#display results
+enrichkegg <- kk2@result
+enrichkegg <- enrichkegg %>%
+  rownames_to_column() %>%
+   rename(pathid = rowname) %>%
+   select(pathid, Description, enrichmentScore) 
+
+#edit description 
+enrichkegg$Description = substr(enrichkegg$Description, 1, nchar(enrichkegg$Description)-22)
+
+#data table for enrichment scores
+datatable(enrichkegg,
+          class = 'cell-border stripe',
+          caption = htmltools::tags$caption(
+          style = 'caption-side: bottom; text-align: center;',
+                  'Table 3: ',
+                  width = 3,
+          htmltools::em('Enrichment Scores of KEGG Pathways.')),
+          filter = 'top',
+          extensions = 'FixedColumns',
+          options = list(
+              pageLength = 5,
+              autoWidth = TRUE
+              ,
+              scrollX = TRUE
+                        )
+          )
 ```
+
+
+
 ### The Top Under-Expressed & Over-Expressed KEGG Pathways.
 ```{r, results = FALSE, message = FALSE, warning = FALSE}
 #top overexpressed pathway

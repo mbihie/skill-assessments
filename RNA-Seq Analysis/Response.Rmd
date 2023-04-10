@@ -4,33 +4,36 @@ output: html_document
 date: "2023-02-22"
 ---
 
-1. If we want our HTML report to be more user-friendly to read: We want code folding to be enabled and hidden by default (add this option in your YAML header)
-*I have added code folding*
+#### **1. If we want our HTML report to be more user-friendly to read: We want code folding to be enabled and hidden by default (add this option in your YAML header)**
+I have added code folding
 
 
-2. We want short descriptions
-*I have added short descriptions*
+#### **2. We want short descriptions**
+I have added short descriptions.
 
-3. You mixed up sections (3) and (4)
-*I have switched the sections*
+#### **3. You mixed up sections (3) and (4)**
+I have switched the sections.
 
-4. For defining your DEGs, you used `padj < 0.05` and `long2Foldchange > 2`, but in your volcano plot you used `FCcutoff = 3` and `pCutoff = 1e-100`. It probably makes more sense to have these match up. You may want to increase the height of your volcano plot too.
-*I have set both the DEG table and volcano plot to `padj < 0.05` and `long2Foldchange > 2`. I have also increased the height of the volcano plot.*
+#### **4. For defining your DEGs, you used `padj < 0.05` and `long2Foldchange > 2`, but in your volcano plot you used `FCcutoff = 3` and `pCutoff = 1e-100`. It probably makes more sense to have these match up. You may want to increase the height of your volcano plot too.**
+I have set both the DEG table and volcano plot to `padj < 0.05` and `long2Foldchange > 2`. I have also increased the height of the volcano plot.
 
-5. Your PCA plot is scrunched vertically since PC2 captures very little variance. See this link on one way to fix: https://support.bioconductor.org/p/128155/
-*I have adjusted the height of the PCA plot.*
+#### **5. Your PCA plot is scrunched vertically since PC2 captures very little variance. See this link on one way to fix: https://support.bioconductor.org/p/128155/**
+I have adjusted the height of the PCA plot.
 
-6. For your DEG heatmap: There should be 10 DEGs each for over- and under-expressed. Instead you have 6 and 14.
-*I was able to include 10 over- and under-expressed DEGs in my heatmap with the code below.*
+#### **6. For your DEG heatmap: There should be 10 DEGs each for over- and under-expressed. Instead you have 6 and 14.**
+I was able to include 10 over- and under-expressed DEGs in my heatmap with the code below.
 
 ```
 cluster_rows=F, 
 cluster_cols=F,
 ```
 
-7. The `run` legend is redundant as we already see the run IDs in the x-axis.
-*I tried to remove the run ID, but was unable to remove the coloured boxes. I instead, have removed the run information on the bottom of the graph so that it is only shown in the legend. I hope that is an acceptable alternative*
+#### **7. The `run` legend is redundant as we already see the run IDs in the x-axis.**
+I tried to remove the run ID, but was unable to remove the coloured boxes. I instead, have removed the run information on the bottom of the graph so that it is only shown in the legend. I hope that is an acceptable alternative.
 
-8. For part 6, you're missing under-express pathways. Also add relevant metrics to your pathway table (eg. some form of enrichment score, p-value etc.)
-Collapse
-*The over expressed pathway displayed under "The Top Over-Expressed KEGG Pathway: NUCLEOCYTOPLASMIC TRANSPORT" is titled RNA transport in the *
+#### **8. For part 6, you're missing under-express pathways. Also add relevant metrics to your pathway table (eg. some form of enrichment score, p-value etc.)**
+
+When looking for the underexpressed pathways under the matrix "less", the reverse of the pathways and values provided matched the "greater" matrix. Therefore, I only used the greater matrix in the first datatable of part 6 since it would include both the over-expressed and under-expressed pathways.
+
+I also found sources stating that "stat.mean" represents the enrichment score in the gage() function. I tried to find the enrichment scores of the pathways from the gage() function by using the gseKEGG function, but I could not match the pathways from gseKEGG() to the ones found with gage(). Instead, I provided a list of enrichment scores from both functions.
+
