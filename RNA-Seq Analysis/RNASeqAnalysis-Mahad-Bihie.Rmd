@@ -90,8 +90,8 @@ plotadj <- plotPCA(rld)
 
 #edit the plot
 plotadj + coord_fixed(ratio = 1,
-                      xlim=c(-50, 50),
-                      ylim=c(-10, 10))
+                      xlim=c(-150, 150),
+                      ylim=c(-100, 100))
 ```
 
 ## 2. MA Plot - Mean Expression VS Log 2 Fold Change

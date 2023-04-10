@@ -18,7 +18,13 @@ I have switched the sections.
 I have set both the DEG table and volcano plot to `padj < 0.05` and `long2Foldchange > 2`. I have also increased the height of the volcano plot.
 
 #### **5. Your PCA plot is scrunched vertically since PC2 captures very little variance. See this link on one way to fix: https://support.bioconductor.org/p/128155/**
-I have adjusted the height of the PCA plot.
+I have adjusted the height of the PCA plot by adding the code below.
+
+```
+plotadj + coord_fixed(ratio = 1,
+                      xlim=c(-150, 150),
+                      ylim=c(-100, 100))
+```
 
 #### **6. For your DEG heatmap: There should be 10 DEGs each for over- and under-expressed. Instead you have 6 and 14.**
 I was able to include 10 over- and under-expressed DEGs in my heatmap with the code below.
